@@ -23,6 +23,7 @@ function App() {
     <>
       <GlobeView
         statuses={FAKE_STATUSES}
+        selectedId={selected?.id ?? null}
         autoRotate={autoRotate}
         onSelect={setSelected}
       />
@@ -32,7 +33,7 @@ function App() {
         className="fixed left-6 top-6 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60"
       >
         {autoRotate ? <Pause size={18} /> : <Play size={18} />}
-        {autoRotate ? 'Pausar rotação' : 'Girar globo'}
+        <span>{autoRotate ? 'Pausar rotação' : 'Girar globo'}</span>
       </button>
 
       {selected && (

@@ -19,6 +19,9 @@ const OCEAN_COLOR = '#fcebf1'
 // Funções fixas ficam FORA do componente para não serem recriadas à toa
 const sideColor = () => 'rgba(255,255,255,0.2)'
 const strokeColor = () => 'rgba(255,255,255,0.8)'
+// O anel pede uma função que devolve outra função: t vai de 0 a 1
+// enquanto o anel cresce, e a cor vai ficando transparente
+const ringColor = () => (t: number) => `rgba(233, 30, 99, ${1 - t})`
 function labelOf(f: object): string {
   const place = PLACES_BY_ID[(f as MapFeature).properties.ID]
   return place ? `<div class="globe-tip">${placeLabel(place)}</div>` : ''
@@ -26,6 +29,7 @@ function labelOf(f: object): string {
 
 type Props = {
   statuses: Record<string, CountryStatus> // chave = id do lugar
+  selectedId: string | null // id do lugar selecionado (ou null)
   autoRotate: boolean
   onSelect: (place: Place) => void
 }
@@ -44,7 +48,12 @@ function useWindowSize() {
   return size
 }
 
-export default function GlobeView({ statuses, autoRotate, onSelect }: Props) {
+export default function GlobeView({
+  statuses,
+  selectedId,
+  autoRotate,
+  onSelect,
+}: Props) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
   const { width, height } = useWindowSize()
   const [features, setFeatures] = useState<MapFeature[]>([])
@@ -72,6 +81,12 @@ export default function GlobeView({ statuses, autoRotate, onSelect }: Props) {
   )
 
   const handleReady = useCallback(() => setReady(true), [])
+
+  // Um anel no lugar selecionado; lista vazia = nenhum anel
+  const ringsData = useMemo(() => {
+    const place = selectedId ? PLACES_BY_ID[selectedId] : undefined
+    return place ? [{ lat: place.lat, lng: place.lng }] : []
+  }, [selectedId])
 
   // Liga/desliga a rotação (botão de pausa)
   useEffect(() => {
@@ -142,6 +157,12 @@ export default function GlobeView({ statuses, autoRotate, onSelect }: Props) {
         polygonsTransitionDuration={0}
         polygonLabel={labelOf}
         onPolygonClick={handleClick}
+        ringsData={ringsData}
+        ringColor={ringColor}
+        ringAltitude={0.012}
+        ringMaxRadius={4}
+        ringPropagationSpeed={2}
+        ringRepeatPeriod={1200}
       />
     </div>
   )
