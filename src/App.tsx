@@ -1,6 +1,10 @@
 import { useState } from 'react'
-import { Pause, Play, X } from 'lucide-react'
+import { signOut } from 'firebase/auth'
+import { Leaf, LogOut, Pause, Play, X } from 'lucide-react'
 import GlobeView from './components/globe/GlobeView'
+import LoginScreen from './components/auth/LoginScreen'
+import { useAuth } from './hooks/useAuth'
+import { auth } from './lib/firebase'
 import { CONTINENT_NAMES, placeDetail, type Place } from './lib/places'
 import type { CountryStatus } from './types/country'
 
@@ -16,9 +20,37 @@ const FAKE_STATUSES: Record<string, CountryStatus> = {
 }
 
 function App() {
+  // Todos os hooks ficam aqui em cima, antes de qualquer "return" condicional
+  const { user, loading } = useAuth()
   const [selected, setSelected] = useState<Place | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
 
+  async function sair() {
+    setSelected(null)
+    await signOut(auth)
+  }
+
+  // 1) Ainda descobrindo se tem alguém logado: tela simples de espera
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{
+          background:
+            'linear-gradient(180deg, #cdb8ee 0%, #f3b8d4 55%, #ffd9c7 100%)',
+        }}
+      >
+        <Leaf className="h-12 w-12 animate-pulse text-[#d9578a]" />
+      </div>
+    )
+  }
+
+  // 2) Ninguém logado: mostra o login
+  if (!user) {
+    return <LoginScreen />
+  }
+
+  // 3) Logado: mostra o globo
   return (
     <>
       <GlobeView
@@ -34,6 +66,14 @@ function App() {
       >
         {autoRotate ? <Pause size={18} /> : <Play size={18} />}
         <span>{autoRotate ? 'Pausar rotação' : 'Girar globo'}</span>
+      </button>
+
+      <button
+        onClick={sair}
+        className="fixed left-6 top-20 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60"
+      >
+        <LogOut size={18} />
+        <span>Sair</span>
       </button>
 
       {selected && (
