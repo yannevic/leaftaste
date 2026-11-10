@@ -36,7 +36,9 @@ type Props = {
   selectedId: string | null // id do lugar selecionado (ou null)
   autoRotate: boolean
   focusRequest: FocusRequest | null // pedido para a câmera ir até um lugar
+  spinRequest: FocusRequest | null // pedido de roleta (sorteio)
   onSelect: (place: Place) => void
+  onSpinEnd: (place: Place) => void // avisa quando a roleta parou
 }
 
 function useWindowSize() {
@@ -58,12 +60,20 @@ export default function GlobeView({
   selectedId,
   autoRotate,
   focusRequest,
+  spinRequest,
   onSelect,
+  onSpinEnd,
 }: Props) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
   const { width, height } = useWindowSize()
   const [features, setFeatures] = useState<MapFeature[]>([])
   const [ready, setReady] = useState(false)
+    // Guarda a função "a roleta parou" numa caixinha (ref), assim a animação
+  // não reinicia se o App recriar a função
+  const onSpinEndRef = useRef(onSpinEnd)
+  useEffect(() => {
+    onSpinEndRef.current = onSpinEnd
+  }, [onSpinEnd])
 
   // Baixa o mapa uma vez
   useEffect(() => {
@@ -141,6 +151,42 @@ export default function GlobeView({
     const place = PLACES_BY_ID[focusRequest.id]
     if (place) flyTo(place.lat, place.lng)
   }, [focusRequest, flyTo])
+
+  // Roleta do sorteio: gira o globo e desacelera até parar no lugar sorteado
+  useEffect(() => {
+    if (!spinRequest) return
+    const globeOuNada = globeRef.current
+    const lugarOuNada = PLACES_BY_ID[spinRequest.id]
+    if (!globeOuNada || !lugarOuNada) return
+    // Cópias "garantidas": daqui para baixo o TypeScript sabe que existem
+    const globe: GlobeMethods = globeOuNada
+    const place: Place = lugarOuNada
+
+    const inicio = globe.pointOfView()
+    const altitude = Math.min(inicio.altitude, 1.8)
+    // O que falta girar até o lugar, mais 2 voltas completas
+    const falta = (((place.lng - inicio.lng) % 360) + 360) % 360
+    const total = falta + 720
+    const duracao = 3500 // milissegundos
+    const comeco = performance.now()
+    let frameId = 0
+
+    function passo(agora: number) {
+      const p = Math.min((agora - comeco) / duracao, 1) // 0 até 1
+      const suave = 1 - Math.pow(1 - p, 3) // começa rápido, termina devagar
+      const lng = ((inicio.lng + total * suave + 540) % 360) - 180
+      const lat = inicio.lat + (place.lat - inicio.lat) * suave
+      globe.pointOfView({ lat, lng, altitude }, 0)
+      if (p < 1) {
+        frameId = requestAnimationFrame(passo)
+      } else {
+        onSpinEndRef.current(place)
+      }
+    }
+    frameId = requestAnimationFrame(passo)
+
+    return () => cancelAnimationFrame(frameId)
+  }, [spinRequest])
 
   // Só muda se os status mudarem
   const capColor = useCallback(

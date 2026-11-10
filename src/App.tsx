@@ -17,10 +17,13 @@ function App() {
   const [selected, setSelected] = useState<Place | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [focus, setFocus] = useState<FocusRequest | null>(null)
+  const [spin, setSpin] = useState<FocusRequest | null>(null)
+  const [sorteando, setSorteando] = useState(false)
 
   async function sair() {
     setSelected(null)
     setFocus(null)
+    setSorteando(false)
     await signOut(auth)
   }
 
@@ -45,9 +48,17 @@ function App() {
   )
 
   function sortear() {
-    if (pendentes.length === 0) return
+    if (pendentes.length === 0 || sorteando) return
     const escolhido = pendentes[Math.floor(Math.random() * pendentes.length)]
-    escolherNaBusca(escolhido)
+    setSelected(null) // fecha o painel enquanto a roleta gira
+    setSorteando(true)
+    setSpin((anterior) => ({ id: escolhido.id, n: (anterior?.n ?? 0) + 1 }))
+  }
+
+  // A roleta parou: agora sim abre o painel do lugar sorteado
+  function terminouSorteio(place: Place) {
+    setSorteando(false)
+    setSelected(place)
   }
 
   // 1) Ainda descobrindo se tem alguém logado: tela simples de espera
@@ -78,6 +89,8 @@ function App() {
         selectedId={selected?.id ?? null}
         autoRotate={autoRotate}
         focusRequest={focus}
+        spinRequest={spin}
+        onSpinEnd={terminouSorteio}
         onSelect={setSelected}
       />
 
@@ -101,7 +114,7 @@ function App() {
 
             <button
         onClick={sortear}
-        disabled={pendentes.length === 0}
+        disabled={pendentes.length === 0 || sorteando}
         className="fixed left-6 top-34 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60 disabled:opacity-50"
       >
         <Dices size={18} />
