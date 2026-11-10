@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import DishForm from './DishForm'
+import DishItem from './DishItem'
 import FlagIcon from '../ui/FlagIcon'
 import { useDishes } from '../../hooks/useDishes'
 import { CONTINENT_NAMES, placeDetail, type Place } from '../../lib/places'
@@ -17,10 +18,11 @@ const STATUS_INFO: Record<CountryStatus, { rotulo: string; cor: string }> = {
 type Props = {
   place: Place
   status: CountryStatus
+  uid: string // quem está logado
   onClose: () => void
 }
 
-export default function PlacePanel({ place, status, onClose }: Props) {
+export default function PlacePanel({ place, status, uid, onClose }: Props) {
   const info = STATUS_INFO[status]
   const detalhe = placeDetail(place)
   const { dishes, carregando, erro } = useDishes(place.id)
@@ -75,22 +77,7 @@ export default function PlacePanel({ place, status, onClose }: Props) {
 
       <ul className="mt-2 space-y-2">
         {dishes.map((prato) => (
-          <li
-            key={prato.id}
-            className="flex items-center justify-between gap-2 rounded-2xl bg-white/50 px-3 py-2 text-[#5c3347]"
-          >
-            <span className="font-semibold">{prato.name}</span>
-            <span className="flex shrink-0 gap-1 text-xs font-semibold">
-              <span className="rounded-full bg-[#f48fb1]/30 px-2 py-0.5 text-[#b0476f]">
-                {prato.type === 'doce' ? 'Doce' : 'Salgado'}
-              </span>
-              {prato.isExtra && (
-                <span className="rounded-full bg-[#fff0b8] px-2 py-0.5 text-[#8a6d1d]">
-                  Extra
-                </span>
-              )}
-            </span>
-          </li>
+          <DishItem key={prato.id} dish={prato} uid={uid} />
         ))}
       </ul>
 

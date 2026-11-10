@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   serverTimestamp,
+  updateDoc,
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -43,4 +44,18 @@ export async function addDish(prato: NovoPrato, statusAtual: CountryStatus) {
   }
 
   await batch.commit()
+}
+
+// Salva a nota e o comentário de UMA pessoa num prato.
+// O caminho com ponto ("ratings.UID") mexe só na chave dessa pessoa,
+// sem apagar a avaliação do outro.
+export async function rateDish(
+  dishId: string,
+  uid: string,
+  score: number,
+  comment: string,
+) {
+  await updateDoc(doc(db, 'dishes', dishId), {
+    [`ratings.${uid}`]: { score, comment },
+  })
 }

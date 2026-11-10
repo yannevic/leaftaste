@@ -92,6 +92,7 @@ function App() {
         <PlacePanel
           key={selected.id}
           place={selected}
+          uid={user.uid}
           status={statuses[selected.id] ?? 'pending'}
           onClose={() => setSelected(null)}
         />
