@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MeshPhongMaterial } from 'three'
 import Globe, { type GlobeMethods } from 'react-globe.gl'
 import { PLACES_BY_ID, placeLabel, type Place } from '../../lib/places'
+import { createOceanTexture } from '../../lib/oceanTexture'
 import type { CountryStatus } from '../../types/country'
 
 // Cada polígono do mapa traz só o ID do lugar (ex.: "BR", "GF")
@@ -14,7 +15,6 @@ const STATUS_COLORS: Record<CountryStatus, string> = {
   skipped: '#e8d6b8', // bege areia
 }
 const OUTSIDE_COLOR = '#efe9ee' // só por segurança, se um ID não for encontrado
-const OCEAN_COLOR = '#fcebf1'
 
 // Funções fixas ficam FORA do componente para não serem recriadas à toa
 const sideColor = () => 'rgba(255,255,255,0.2)'
@@ -69,16 +69,31 @@ export default function GlobeView({
     loadMap()
   }, [])
 
-  // Material do oceano, criado uma vez só
+  // Textura e material do oceano, criados uma vez só
+  const oceanTexture = useMemo(() => createOceanTexture(), [])
   const oceanMaterial = useMemo(
     () =>
       new MeshPhongMaterial({
-        color: OCEAN_COLOR,
-        emissive: OCEAN_COLOR,
-        emissiveIntensity: 0.5,
+        map: oceanTexture,
+        emissiveMap: oceanTexture,
+        emissive: '#ffffff',
+        emissiveIntensity: 0.4,
+        specular: '#000000', // sem reflexo de espelho
+        shininess: 0,
       }),
-    [],
+    [oceanTexture],
   )
+
+  // Desliza a textura bem devagar: dá a sensação de água se mexendo
+  useEffect(() => {
+    let frameId = 0
+    function animate() {
+      oceanTexture.offset.x += 0.00012
+      frameId = requestAnimationFrame(animate)
+    }
+    animate()
+    return () => cancelAnimationFrame(frameId)
+  }, [oceanTexture])
 
   const handleReady = useCallback(() => setReady(true), [])
 
