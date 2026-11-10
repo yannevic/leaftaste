@@ -86,6 +86,7 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
         <DishForm
           placeId={place.id}
           statusAtual={status}
+          pratos={dishes}
           onDone={() => setFormAberto(false)}
         />
       ) : (

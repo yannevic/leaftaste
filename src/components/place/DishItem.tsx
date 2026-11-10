@@ -67,6 +67,17 @@ export default function DishItem({ dish, uid }: Props) {
         </span>
       </div>
 
+      {dish.recipe && (
+        <details className="mt-2 text-sm">
+          <summary className="cursor-pointer font-semibold text-[#b0476f]">
+            <span>Ver receita</span>
+          </summary>
+          <p className="mt-1 whitespace-pre-wrap wrap-break-word">
+            {dish.recipe}
+          </p>
+        </details>
+      )}
+
       <div className="mt-2 space-y-2 text-sm">
         {/* A minha avaliação */}
         <div>

@@ -1,24 +1,35 @@
 import { useState, type FormEvent } from 'react'
 import { addDish } from '../../lib/dishes'
 import type { CountryStatus } from '../../types/country'
-import type { DishType } from '../../types/dish'
+import type { Dish, DishType } from '../../types/dish'
 
 type Props = {
   placeId: string
   statusAtual: CountryStatus
+  pratos: Dish[] // pratos que o lugar já tem
   onDone: () => void // chamada depois de salvar ou ao cancelar
 }
 
 const CAMPO =
   'w-full rounded-2xl border border-white/70 bg-white/60 px-3 py-2 text-[#5c3347] placeholder:text-[#b0476f]/50 outline-none focus:border-[#f48fb1] focus:ring-2 focus:ring-[#f48fb1]/40'
 
-export default function DishForm({ placeId, statusAtual, onDone }: Props) {
+export default function DishForm({
+  placeId,
+  statusAtual,
+  pratos,
+  onDone,
+}: Props) {
   const [name, setName] = useState('')
   const [type, setType] = useState<DishType>('doce')
   const [isExtra, setIsExtra] = useState(false)
   const [recipe, setRecipe] = useState('')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // já existe um prato principal (não extra) deste tipo?
+  const vagaOcupada = pratos.some((p) => p.type === type && !p.isExtra)
+  // se a vaga está ocupada, o prato só pode entrar como extra
+  const extraEfetivo = isExtra || vagaOcupada
 
   async function salvar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -30,7 +41,13 @@ export default function DishForm({ placeId, statusAtual, onDone }: Props) {
     setEnviando(true)
     try {
       await addDish(
-        { placeId, type, isExtra, name: name.trim(), recipe: recipe.trim() },
+        {
+          placeId,
+          type,
+          isExtra: extraEfetivo,
+          name: name.trim(),
+          recipe: recipe.trim(),
+        },
         statusAtual,
       )
       onDone()
@@ -73,12 +90,21 @@ export default function DishForm({ placeId, statusAtual, onDone }: Props) {
       <label className="flex items-center gap-2 text-sm text-[#5c3347]">
         <input
           type="checkbox"
-          checked={isExtra}
+          checked={extraEfetivo}
+          disabled={vagaOcupada}
           onChange={(e) => setIsExtra(e.target.checked)}
           className="h-4 w-4 accent-[#f48fb1]"
         />
         <span>Prato extra (opcional)</span>
       </label>
+
+      {vagaOcupada && (
+        <p className="text-xs text-pink-500">
+          {type === 'doce'
+            ? 'Este lugar já tem o doce principal, então este entra como extra.'
+            : 'Este lugar já tem o salgado principal, então este entra como extra.'}
+        </p>
+      )}
 
       <textarea
         placeholder="Receita (pode deixar em branco por enquanto)"
