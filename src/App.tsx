@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
-import { BarChart3, BookOpen, Dices, Leaf, LogOut, Pause, Play, Trophy } from 'lucide-react'
+import {
+  BarChart3,
+  BookOpen,
+  Dices,
+  Leaf,
+  LogOut,
+  Pause,
+  Play,
+  Trophy,
+} from 'lucide-react'
 import GlobeView, { type FocusRequest } from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
 import PlacePanel from './components/place/PlacePanel'
@@ -13,19 +22,18 @@ import { usePlaces } from './hooks/usePlaces'
 import { auth } from './lib/firebase'
 import { PLACES, type Place } from './lib/places'
 
-
 function App() {
   // Todos os hooks ficam aqui em cima, antes de qualquer "return" condicional
   const { user, loading } = useAuth()
-   const { statuses, datas, erro } = usePlaces(user !== null)
+  const { statuses, datas, erro } = usePlaces(user !== null)
   const [selected, setSelected] = useState<Place | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [focus, setFocus] = useState<FocusRequest | null>(null)
   const [spin, setSpin] = useState<FocusRequest | null>(null)
   const [sorteando, setSorteando] = useState(false)
-    const [rankingAberto, setRankingAberto] = useState(false)
-      const [passaporteAberto, setPassaporteAberto] = useState(false)
-        const [estatisticasAberto, setEstatisticasAberto] = useState(false)
+  const [rankingAberto, setRankingAberto] = useState(false)
+  const [passaporteAberto, setPassaporteAberto] = useState(false)
+  const [estatisticasAberto, setEstatisticasAberto] = useState(false)
 
   async function sair() {
     setSelected(null)
@@ -52,7 +60,7 @@ function App() {
   }
   const resolvidos = feitos + pulados
 
-    // Sorteio: só entra lugar pendente (sem documento no Firestore também é pendente)
+  // Sorteio: só entra lugar pendente (sem documento no Firestore também é pendente)
   const pendentes = PLACES.filter(
     (lugar) => (statuses[lugar.id] ?? 'pending') === 'pending',
   )
@@ -122,7 +130,7 @@ function App() {
         <span>Sair</span>
       </button>
 
-            <button
+      <button
         onClick={sortear}
         disabled={pendentes.length === 0 || sorteando}
         className="fixed left-6 top-34 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60 disabled:opacity-50"
@@ -131,8 +139,8 @@ function App() {
         <span>Sortear lugar</span>
       </button>
 
-            <button
-                onClick={() => {
+      <button
+        onClick={() => {
           setPassaporteAberto(false)
           setEstatisticasAberto(false)
           setRankingAberto(true)
@@ -143,7 +151,7 @@ function App() {
         <span>Ranking</span>
       </button>
 
-            <button
+      <button
         onClick={() => {
           setRankingAberto(false)
           setPassaporteAberto(true)
@@ -155,7 +163,7 @@ function App() {
         <span>Passaporte</span>
       </button>
 
-            <button
+      <button
         onClick={() => {
           setRankingAberto(false)
           setPassaporteAberto(false)
@@ -167,7 +175,7 @@ function App() {
         <span>Estatísticas</span>
       </button>
 
-            <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
+      <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
         <p className="text-2xl font-bold text-pink-600">
           {resolvidos}/{PLACES.length}
         </p>
@@ -186,11 +194,11 @@ function App() {
         </p>
       )}
 
-            {rankingAberto && (
+      {rankingAberto && (
         <RankingPanel uid={user.uid} onClose={() => setRankingAberto(false)} />
       )}
 
-           {passaporteAberto && (
+      {passaporteAberto && (
         <PassportPanel
           statuses={statuses}
           datas={datas}
@@ -198,7 +206,7 @@ function App() {
         />
       )}
 
-            {estatisticasAberto && (
+      {estatisticasAberto && (
         <StatsPanel
           uid={user.uid}
           statuses={statuses}

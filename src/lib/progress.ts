@@ -13,7 +13,10 @@ export type ContinentProgress = {
 export function progressoPorContinente(
   statuses: Record<string, CountryStatus>,
 ): ContinentProgress[] {
-  const contas = new Map<Place['continent'], { total: number; resolvidos: number }>()
+  const contas = new Map<
+    Place['continent'],
+    { total: number; resolvidos: number }
+  >()
 
   for (const lugar of PLACES) {
     const conta = contas.get(lugar.continent) ?? { total: 0, resolvidos: 0 }
@@ -33,7 +36,9 @@ export function progressoPorContinente(
 }
 
 // O mundo esta completo quando todos os lugares foram resolvidos
-export function mundoCompleto(statuses: Record<string, CountryStatus>): boolean {
+export function mundoCompleto(
+  statuses: Record<string, CountryStatus>,
+): boolean {
   return PLACES.every((lugar) => {
     const status = statuses[lugar.id]
     return status === 'done' || status === 'skipped'

@@ -73,9 +73,10 @@ export default function PassportPanel({ statuses, datas, onClose }: Props) {
   const mundo = mundoCompleto(statuses)
 
   // Lugares finalizados, os mais recentes primeiro (sem data vao para o fim)
-  const finalizados = PLACES.filter((lugar) => statuses[lugar.id] === 'done').sort(
-    (a, b) =>
-      (datas[b.id]?.getTime() ?? 0) - (datas[a.id]?.getTime() ?? 0),
+  const finalizados = PLACES.filter(
+    (lugar) => statuses[lugar.id] === 'done',
+  ).sort(
+    (a, b) => (datas[b.id]?.getTime() ?? 0) - (datas[a.id]?.getTime() ?? 0),
   )
 
   return (

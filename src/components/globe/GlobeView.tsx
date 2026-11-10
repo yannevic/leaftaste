@@ -68,7 +68,7 @@ export default function GlobeView({
   const { width, height } = useWindowSize()
   const [features, setFeatures] = useState<MapFeature[]>([])
   const [ready, setReady] = useState(false)
-    // Guarda a função "a roleta parou" numa caixinha (ref), assim a animação
+  // Guarda a função "a roleta parou" numa caixinha (ref), assim a animação
   // não reinicia se o App recriar a função
   const onSpinEndRef = useRef(onSpinEnd)
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function GlobeView({
     if (!controls) return
     controls.autoRotate = autoRotate
     controls.autoRotateSpeed = 0.4
-        controls.minDistance = 102 // não deixa a câmera chegar colada nos países
+    controls.minDistance = 102 // não deixa a câmera chegar colada nos países
     // Inércia só enquanto gira: ao pausar, o globo para na hora
     controls.enableDamping = autoRotate
   }, [autoRotate, ready])

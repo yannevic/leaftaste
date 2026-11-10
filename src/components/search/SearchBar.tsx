@@ -1,4 +1,3 @@
-
 import { useState, type KeyboardEvent } from 'react'
 import { Search } from 'lucide-react'
 import FlagIcon from '../ui/FlagIcon'

@@ -103,7 +103,9 @@ export default function StatsPanel({ uid, statuses, onClose }: Props) {
     if (m !== null) comMedia.push({ prato, media: m })
   }
   comMedia.sort((a, b) => b.media - a.media)
-  const melhoresDoces = comMedia.filter((p) => p.prato.type === 'doce').slice(0, 5)
+  const melhoresDoces = comMedia
+    .filter((p) => p.prato.type === 'doce')
+    .slice(0, 5)
   const melhoresSalgados = comMedia
     .filter((p) => p.prato.type === 'salgado')
     .slice(0, 5)

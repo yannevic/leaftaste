@@ -1,7 +1,7 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --font-sans: "Baloo 2", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Baloo 2', ui-sans-serif, system-ui, sans-serif;
 }
 
 body {

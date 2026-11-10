@@ -18,7 +18,14 @@ function drawBlobs(
     const color = colors[Math.floor(Math.random() * colors.length)]
     for (const dx of [-w, 0, w]) {
       for (const dy of [-h, 0, h]) {
-        const grad = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r)
+        const grad = ctx.createRadialGradient(
+          x + dx,
+          y + dy,
+          0,
+          x + dx,
+          y + dy,
+          r,
+        )
         grad.addColorStop(0, color)
         grad.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.fillStyle = grad
