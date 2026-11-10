@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react'
 import DishForm from './DishForm'
 import DishItem from './DishItem'
 import PlaceActions from './PlaceActions'
+import SuggestionsSection from './SuggestionsSection'
 import FlagIcon from '../ui/FlagIcon'
 import { useDishes } from '../../hooks/useDishes'
 import { CONTINENT_NAMES, placeDetail, type Place } from '../../lib/places'
@@ -38,22 +39,18 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
       >
         <X size={20} />
       </button>
-
       <div className="flex items-center gap-3 pr-8">
         <FlagIcon place={place} size="2.25rem" />
         <h2 className="text-2xl font-bold leading-tight text-pink-600">
           {place.name}
         </h2>
       </div>
-
       <p className="mt-3 text-pink-500">{CONTINENT_NAMES[place.continent]}</p>
-
       {place.kind === 'territory' && (
         <p className="mt-1 text-sm text-pink-400">
           Território{detalhe && ` · ${detalhe}`}
         </p>
       )}
-
       <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1 text-sm font-semibold text-[#5c3347]">
         <span
           className="h-3 w-3 rounded-full border border-white"
@@ -61,27 +58,22 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
         />
         <span>{info.rotulo}</span>
       </div>
-
       <h3 className="mt-5 text-lg font-bold text-pink-600">Pratos</h3>
-
       {erro && (
         <p role="alert" className="mt-2 text-sm text-[#c2255c]">
           Não foi possível carregar os pratos.
         </p>
       )}
-
       {!erro && !carregando && dishes.length === 0 && (
         <p className="mt-2 text-sm text-pink-400">
           Nenhum prato registrado ainda.
         </p>
       )}
-
       <ul className="mt-2 space-y-2">
         {dishes.map((prato) => (
           <DishItem key={prato.id} dish={prato} uid={uid} />
         ))}
       </ul>
-
       {formAberto ? (
         <DishForm
           placeId={place.id}
@@ -99,6 +91,7 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
         </button>
       )}
 
+      <SuggestionsSection place={place} />
       <PlaceActions
         placeId={place.id}
         status={status}

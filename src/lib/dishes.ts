@@ -2,12 +2,14 @@ import {
   collection,
   doc,
   serverTimestamp,
+  setDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { CountryStatus } from '../types/country'
 import type { DishType } from '../types/dish'
+import type { Sugestao } from '../types/suggestion'
 
 type NovoPrato = {
   placeId: string
@@ -58,4 +60,14 @@ export async function rateDish(
   await updateDoc(doc(db, 'dishes', dishId), {
     [`ratings.${uid}`]: { score, comment },
   })
+}
+
+// Guarda as sugestões da IA no lugar, para não gastar IA de novo.
+// merge: true cria o documento se não existir, sem mexer no status.
+export async function salvarSugestoes(placeId: string, sugestoes: Sugestao[]) {
+  await setDoc(
+    doc(db, 'places', placeId),
+    { suggestions: sugestoes, suggestionsAt: serverTimestamp() },
+    { merge: true },
+  )
 }
