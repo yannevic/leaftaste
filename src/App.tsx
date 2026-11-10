@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
-import { Dices, Leaf, LogOut, Pause, Play } from 'lucide-react'
+import { Dices, Leaf, LogOut, Pause, Play, Trophy } from 'lucide-react'
 import GlobeView, { type FocusRequest } from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
 import PlacePanel from './components/place/PlacePanel'
+import RankingPanel from './components/ranking/RankingPanel'
 import SearchBar from './components/search/SearchBar'
 import { useAuth } from './hooks/useAuth'
 import { usePlaces } from './hooks/usePlaces'
@@ -19,11 +20,13 @@ function App() {
   const [focus, setFocus] = useState<FocusRequest | null>(null)
   const [spin, setSpin] = useState<FocusRequest | null>(null)
   const [sorteando, setSorteando] = useState(false)
+    const [rankingAberto, setRankingAberto] = useState(false)
 
   async function sair() {
     setSelected(null)
     setFocus(null)
     setSorteando(false)
+    setRankingAberto(false)
     await signOut(auth)
   }
 
@@ -121,6 +124,14 @@ function App() {
         <span>Sortear lugar</span>
       </button>
 
+            <button
+        onClick={() => setRankingAberto(true)}
+        className="fixed left-6 top-48 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60"
+      >
+        <Trophy size={18} />
+        <span>Ranking</span>
+      </button>
+
             <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
         <p className="text-2xl font-bold text-pink-600">
           {resolvidos}/{PLACES.length}
@@ -138,6 +149,10 @@ function App() {
         >
           Não foi possível carregar os lugares.
         </p>
+      )}
+
+            {rankingAberto && (
+        <RankingPanel uid={user.uid} onClose={() => setRankingAberto(false)} />
       )}
 
       {selected && (
