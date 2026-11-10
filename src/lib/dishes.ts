@@ -71,3 +71,20 @@ export async function salvarSugestoes(placeId: string, sugestoes: Sugestao[]) {
     { merge: true },
   )
 }
+
+// Liga ou desliga o "manter" de UMA sugestão (o checkzinho).
+// Como o Firestore não deixa mudar um item solto de dentro de um array,
+// montamos a lista nova com .map (trocando só a sugestão clicada)
+// e gravamos a lista inteira de volta.
+// Usamos updateDoc (e não setDoc) porque o lugar já existe: ele só tem
+// sugestões se alguém já gerou. O suggestionsAt não muda.
+export async function alternarMantida(
+  placeId: string,
+  sugestoes: Sugestao[],
+  nome: string,
+) {
+  const novaLista = sugestoes.map((s) =>
+    s.name === nome ? { ...s, mantida: !s.mantida } : s,
+  )
+  await updateDoc(doc(db, 'places', placeId), { suggestions: novaLista })
+}

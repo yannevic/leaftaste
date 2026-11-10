@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, Sparkles } from 'lucide-react'
 import { sugerirPratos } from '../../lib/ai'
-import { salvarSugestoes } from '../../lib/dishes'
+import { alternarMantida, salvarSugestoes } from '../../lib/dishes'
 import { usePlaceSuggestions } from '../../hooks/usePlaceSuggestions'
 import type { Place } from '../../lib/places'
 import type { Sugestao } from '../../types/suggestion'
@@ -13,9 +13,12 @@ type Props = {
 function ListaSugestoes({
   titulo,
   itens,
+  onAlternar,
 }: {
   titulo: string
   itens: Sugestao[]
+  // função que recebe o nome da sugestão clicada
+  onAlternar: (nome: string) => void
 }) {
   if (itens.length === 0) return null
   return (
@@ -25,7 +28,9 @@ function ListaSugestoes({
         {itens.map((s) => (
           <li
             key={s.name}
-            className="rounded-2xl bg-white/50 px-3 py-2 text-[#5c3347]"
+            className={`rounded-2xl px-3 py-2 text-[#5c3347] ${
+              s.mantida ? 'bg-white/70 ring-2 ring-pink-300' : 'bg-white/50'
+            }`}
           >
             <p className="font-semibold">{s.name}</p>
             {s.description && <p className="text-sm">{s.description}</p>}
@@ -34,6 +39,16 @@ function ListaSugestoes({
               {s.timeMinutes > 0 && ` · ${s.timeMinutes} min`}
               {!s.easyIngredients && ' · ingredientes mais difíceis'}
             </p>
+            {/* Checkzinho: marcar = "quero manter essa opção" */}
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-[#b0476f]">
+              <input
+                type="checkbox"
+                checked={s.mantida === true}
+                onChange={() => onAlternar(s.name)}
+                className="h-4 w-4 accent-pink-500"
+              />
+              <span>Manter como opção</span>
+            </label>
           </li>
         ))}
       </ul>
@@ -60,6 +75,16 @@ export default function SuggestionsSection({ place }: Props) {
       )
     } finally {
       setGerando(false)
+    }
+  }
+
+  async function alternar(nome: string) {
+    setErro('')
+    try {
+      await alternarMantida(place.id, sugestoes, nome)
+    } catch (err) {
+      console.error('Erro ao marcar sugestao:', err)
+      setErro('Não deu para salvar a marcação. Tente de novo.')
     }
   }
 
@@ -104,10 +129,12 @@ export default function SuggestionsSection({ place }: Props) {
           <ListaSugestoes
             titulo="Doces"
             itens={sugestoes.filter((s) => s.type === 'doce')}
+            onAlternar={alternar}
           />
           <ListaSugestoes
             titulo="Salgados"
             itens={sugestoes.filter((s) => s.type === 'salgado')}
+            onAlternar={alternar}
           />
         </>
       )}
