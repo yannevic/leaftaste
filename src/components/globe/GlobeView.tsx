@@ -79,6 +79,8 @@ export default function GlobeView({ statuses, autoRotate, onSelect }: Props) {
     if (!controls) return
     controls.autoRotate = autoRotate
     controls.autoRotateSpeed = 0.4
+    // Inércia só enquanto gira: ao pausar, o globo para na hora
+    controls.enableDamping = autoRotate
   }, [autoRotate, ready])
 
   // Só muda se os status mudarem
