@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { Leaf, LogOut, Pause, Play } from 'lucide-react'
-import GlobeView from './components/globe/GlobeView'
+import GlobeView, { type FocusRequest } from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
 import PlacePanel from './components/place/PlacePanel'
+import SearchBar from './components/search/SearchBar'
 import { useAuth } from './hooks/useAuth'
 import { usePlaces } from './hooks/usePlaces'
 import { auth } from './lib/firebase'
@@ -15,10 +16,18 @@ function App() {
   const { statuses, erro } = usePlaces(user !== null)
   const [selected, setSelected] = useState<Place | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
+  const [focus, setFocus] = useState<FocusRequest | null>(null)
 
   async function sair() {
     setSelected(null)
+    setFocus(null)
     await signOut(auth)
+  }
+
+  // Escolheu um lugar na busca: abre o painel e pede para a câmera ir até ele
+  function escolherNaBusca(place: Place) {
+    setSelected(place)
+    setFocus((anterior) => ({ id: place.id, n: (anterior?.n ?? 0) + 1 }))
   }
 
   // 1) Ainda descobrindo se tem alguém logado: tela simples de espera
@@ -48,8 +57,11 @@ function App() {
         statuses={statuses}
         selectedId={selected?.id ?? null}
         autoRotate={autoRotate}
+        focusRequest={focus}
         onSelect={setSelected}
       />
+
+      <SearchBar onSelect={escolherNaBusca} />
 
       <button
         onClick={() => setAutoRotate((v) => !v)}

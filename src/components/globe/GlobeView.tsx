@@ -27,10 +27,15 @@ function labelOf(f: object): string {
   return place ? `<div class="globe-tip">${placeLabel(place)}</div>` : ''
 }
 
+// Pedido de "vá até este lugar" (feito pela busca). O n muda a cada pedido,
+// assim buscar o mesmo lugar duas vezes também mexe a câmera.
+export type FocusRequest = { id: string; n: number }
+
 type Props = {
   statuses: Record<string, CountryStatus> // chave = id do lugar
   selectedId: string | null // id do lugar selecionado (ou null)
   autoRotate: boolean
+  focusRequest: FocusRequest | null // pedido para a câmera ir até um lugar
   onSelect: (place: Place) => void
 }
 
@@ -52,6 +57,7 @@ export default function GlobeView({
   statuses,
   selectedId,
   autoRotate,
+  focusRequest,
   onSelect,
 }: Props) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
@@ -109,9 +115,32 @@ export default function GlobeView({
     if (!controls) return
     controls.autoRotate = autoRotate
     controls.autoRotateSpeed = 0.4
+        controls.minDistance = 102 // não deixa a câmera chegar colada nos países
     // Inércia só enquanto gira: ao pausar, o globo para na hora
     controls.enableDamping = autoRotate
   }, [autoRotate, ready])
+
+  // Leva a câmera até um ponto (usada pelo clique no mapa e pela busca)
+  const flyTo = useCallback((lat: number, lng: number) => {
+    const globe = globeRef.current
+    if (!globe) return
+    const current = globe.pointOfView()
+    globe.pointOfView(
+      {
+        lat,
+        lng,
+        altitude: Math.min(current.altitude, 1.8),
+      },
+      800,
+    )
+  }, [])
+
+  // Quando chega um pedido novo da busca, a câmera vai até o lugar
+  useEffect(() => {
+    if (!focusRequest) return
+    const place = PLACES_BY_ID[focusRequest.id]
+    if (place) flyTo(place.lat, place.lng)
+  }, [focusRequest, flyTo])
 
   // Só muda se os status mudarem
   const capColor = useCallback(
@@ -130,19 +159,9 @@ export default function GlobeView({
       onSelect(place)
 
       // A câmera vai até o ponto clicado
-      const globe = globeRef.current
-      if (!globe) return
-      const current = globe.pointOfView()
-      globe.pointOfView(
-        {
-          lat: coords.lat,
-          lng: coords.lng,
-          altitude: Math.min(current.altitude, 1.8),
-        },
-        800,
-      )
+      flyTo(coords.lat, coords.lng)
     },
-    [onSelect],
+    [onSelect, flyTo],
   )
 
   return (
