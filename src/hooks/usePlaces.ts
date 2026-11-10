@@ -9,6 +9,8 @@ const STATUS_VALIDOS: string[] = ['pending', 'in_progress', 'done', 'skipped']
 // "ativo" so fica true quando tem alguem logado.
 export function usePlaces(ativo: boolean) {
   const [statuses, setStatuses] = useState<Record<string, CountryStatus>>({})
+  // Data em que cada lugar foi finalizado (so lugares finalizados tem)
+  const [datas, setDatas] = useState<Record<string, Date>>({})
   const [erro, setErro] = useState(false)
 
   useEffect(() => {
@@ -18,13 +20,19 @@ export function usePlaces(ativo: boolean) {
       collection(db, 'places'),
       (snapshot) => {
         const novo: Record<string, CountryStatus> = {}
+        const novasDatas: Record<string, Date> = {}
         snapshot.forEach((documento) => {
-          const status = documento.data().status
-          if (STATUS_VALIDOS.includes(status)) {
-            novo[documento.id] = status as CountryStatus
+          const dados = documento.data()
+          if (STATUS_VALIDOS.includes(dados.status)) {
+            novo[documento.id] = dados.status as CountryStatus
+          }
+          // finishedAt e um Timestamp do Firebase; toDate() vira uma data normal
+          if (dados.status === 'done' && dados.finishedAt) {
+            novasDatas[documento.id] = dados.finishedAt.toDate()
           }
         })
         setStatuses(novo)
+        setDatas(novasDatas)
         setErro(false)
       },
       (err) => {
@@ -37,5 +45,5 @@ export function usePlaces(ativo: boolean) {
     return parar
   }, [ativo])
 
-  return { statuses, erro }
+  return { statuses, datas, erro }
 }
