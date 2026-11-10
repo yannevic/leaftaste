@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, Sparkles } from 'lucide-react'
-import { sugerirPratos } from '../../lib/ai'
+import { ChevronDown, RefreshCw, Sparkles } from 'lucide-react'
+import { sugerirNovos, sugerirPratos } from '../../lib/ai'
 import { alternarMantida, salvarSugestoes } from '../../lib/dishes'
 import { usePlaceSuggestions } from '../../hooks/usePlaceSuggestions'
 import type { Place } from '../../lib/places'
@@ -9,6 +9,9 @@ import type { Sugestao } from '../../types/suggestion'
 type Props = {
   place: Place
 }
+
+// Quantas sugestões de cada tipo a lista deve ter
+const META_POR_TIPO = 4
 
 function ListaSugestoes({
   titulo,
@@ -62,6 +65,10 @@ export default function SuggestionsSection({ place }: Props) {
   const [gerando, setGerando] = useState(false)
   const [erro, setErro] = useState('')
 
+  // Só dá para atualizar se existir pelo menos uma sugestão sem check
+  // (e que ainda não foi escolhida de vez, o que entra na etapa 6.5c)
+  const podeAtualizar = sugestoes.some((s) => !s.mantida && !s.escolhida)
+
   async function gerar() {
     setErro('')
     setGerando(true)
@@ -72,6 +79,47 @@ export default function SuggestionsSection({ place }: Props) {
       console.error('Erro ao gerar sugestoes:', err)
       setErro(
         'A IA não está disponível agora. Tente de novo mais tarde, ou registre o prato à mão.',
+      )
+    } finally {
+      setGerando(false)
+    }
+  }
+
+  async function atualizar() {
+    setErro('')
+    setGerando(true)
+    try {
+      // 1) As que FICAM: marcadas com o check (e, depois, as escolhidas)
+      const ficam = sugestoes.filter((s) => s.mantida || s.escolhida)
+
+      // 2) Quantas faltam de cada tipo para voltar a 4 doces e 4 salgados
+      const docesQueFicam = ficam.filter((s) => s.type === 'doce').length
+      const salgadosQueFicam = ficam.filter((s) => s.type === 'salgado').length
+      const faltamDoces = Math.max(0, META_POR_TIPO - docesQueFicam)
+      const faltamSalgados = Math.max(0, META_POR_TIPO - salgadosQueFicam)
+
+      // 3) Pede à IA só o que falta, mandando TODOS os nomes atuais
+      //    (inclusive os que vão sair) para ela não repetir nenhum
+      const novas = await sugerirNovos(
+        place.name,
+        faltamDoces,
+        faltamSalgados,
+        sugestoes.map((s) => s.name),
+      )
+
+      // 4) Junta as que ficaram com as novas e grava a lista inteira
+      await salvarSugestoes(place.id, [...ficam, ...novas])
+      // Se vier menos do que faltava, avisa em vez de ficar quieto
+      const faltavam = faltamDoces + faltamSalgados
+      if (novas.length < faltavam) {
+        setErro(
+          `A IA só trouxe ${novas.length} de ${faltavam} opções novas. Clique em atualizar de novo para completar.`,
+        )
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar sugestoes:', err)
+      setErro(
+        'Não deu para buscar opções novas agora. As atuais continuam salvas. Tente de novo mais tarde.',
       )
     } finally {
       setGerando(false)
@@ -118,6 +166,26 @@ export default function SuggestionsSection({ place }: Props) {
               <Sparkles size={18} />
               <span>{gerando ? 'Pensando...' : 'Sugerir pratos'}</span>
             </button>
+          )}
+
+          {sugestoes.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={atualizar}
+                disabled={gerando || !podeAtualizar}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/50 py-2 font-semibold text-[#b0476f] hover:bg-white/70 disabled:opacity-60"
+              >
+                <RefreshCw size={18} />
+                <span>
+                  {gerando ? 'Pensando...' : 'Atualizar não marcadas'}
+                </span>
+              </button>
+              <p className="mt-1 text-xs text-[#b0476f]">
+                As opções com check ficam. As outras são trocadas por pratos
+                novos.
+              </p>
+            </>
           )}
 
           {erro && (
