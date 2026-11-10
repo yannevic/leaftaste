@@ -1,5 +1,21 @@
 import { useState } from 'react'
-import { Star, X } from 'lucide-react'
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { GripVertical, Star, X } from 'lucide-react'
 import { useAllDishes } from '../../hooks/useAllDishes'
 import { useRanking } from '../../hooks/useRanking'
 import { PLACES_BY_ID, placeLabel } from '../../lib/places'
@@ -15,11 +31,90 @@ const ABAS: { tipo: DishType; nome: string }[] = [
   { tipo: 'salgado', nome: 'Salgados' },
 ]
 
+// Uma linha do ranking que pode ser arrastada
+function LinhaPrato({
+  prato,
+  indice,
+  uid,
+}: {
+  prato: Dish
+  indice: number
+  uid: string
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: prato.id })
+
+  const lugar = PLACES_BY_ID[prato.placeId]
+  const nota = prato.ratings[uid]?.score
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+        transition,
+        zIndex: isDragging ? 10 : undefined,
+      }}
+      className={`flex items-center gap-3 rounded-2xl border border-white/60 bg-white/50 px-3 py-2 ${
+        isDragging ? 'shadow-xl' : ''
+      }`}
+    >
+      {/* A alca: so ela inicia o arrastar */}
+      <button
+        {...attributes}
+        {...listeners}
+        aria-label={`Arrastar ${prato.name}`}
+        style={{ touchAction: 'none' }}
+        className="cursor-grab rounded-full p-1 text-pink-600 hover:bg-white/60 active:cursor-grabbing"
+      >
+        <GripVertical size={18} />
+      </button>
+      <span className="w-6 text-center text-lg font-bold text-pink-600">
+        {indice + 1}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{prato.name}</p>
+        <p className="truncate text-xs text-[#b0476f]">
+          {lugar ? placeLabel(lugar) : prato.placeId}
+        </p>
+      </div>
+      {nota !== undefined && (
+        <span className="flex items-center gap-1 text-sm font-semibold text-pink-600">
+          <Star size={14} />
+          {nota.toLocaleString('pt-BR')}
+        </span>
+      )}
+    </li>
+  )
+}
+
 export default function RankingPanel({ uid, onClose }: Props) {
   const [tipo, setTipo] = useState<DishType>('doce')
+  const [erroSalvar, setErroSalvar] = useState(false)
   const { dishes, carregando: lendoPratos, erro: erroPratos } = useAllDishes()
-  const { ranking, carregando: lendoRanking, erro: erroRanking } =
-    useRanking(uid)
+  const {
+    ranking,
+    carregando: lendoRanking,
+    erro: erroRanking,
+    salvarOrdem,
+  } = useRanking(uid)
+
+  // Sensores: mouse/toque (so depois de mexer 5px, para nao confundir com clique)
+  // e teclado (setas), para quem preferir
+  const sensores = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
 
   // Pratos do tipo escolhido
   const doTipo = dishes.filter((d) => d.type === tipo)
@@ -41,6 +136,25 @@ export default function RankingPanel({ uid, onClose }: Props) {
       (b.cookedAt?.toMillis() ?? Number.MAX_SAFE_INTEGER),
   )
   ordenados.push(...novos)
+
+  // Soltou o prato: calcula a nova ordem e salva
+  async function terminouArrastar(evento: DragEndEvent) {
+    const { active, over } = evento
+    if (!over || active.id === over.id) return
+
+    const ids = ordenados.map((d) => d.id)
+    const de = ids.indexOf(String(active.id))
+    const para = ids.indexOf(String(over.id))
+    if (de === -1 || para === -1) return
+
+    try {
+      setErroSalvar(false)
+      await salvarOrdem(tipo, arrayMove(ids, de, para))
+    } catch (err) {
+      console.error('Erro ao salvar ranking:', err)
+      setErroSalvar(true)
+    }
+  }
 
   const carregando = lendoPratos || lendoRanking
   const erro = erroPratos || erroRanking
@@ -82,38 +196,37 @@ export default function RankingPanel({ uid, onClose }: Props) {
         </p>
       )}
 
+      {erroSalvar && (
+        <p role="alert" className="mb-2 text-sm text-[#c2255c]">
+          Não foi possível salvar a nova ordem.
+        </p>
+      )}
+
       {!carregando && !erro && ordenados.length === 0 && (
         <p className="text-sm">Ainda não tem nenhum prato desse tipo.</p>
       )}
 
-      <ol className="flex flex-col gap-2">
-        {ordenados.map((prato, indice) => {
-          const lugar = PLACES_BY_ID[prato.placeId]
-          const nota = prato.ratings[uid]?.score
-          return (
-            <li
-              key={prato.id}
-              className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/50 px-3 py-2"
-            >
-              <span className="w-6 text-center text-lg font-bold text-pink-600">
-                {indice + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{prato.name}</p>
-                <p className="truncate text-xs text-[#b0476f]">
-                  {lugar ? placeLabel(lugar) : prato.placeId}
-                </p>
-              </div>
-              {nota !== undefined && (
-                <span className="flex items-center gap-1 text-sm font-semibold text-pink-600">
-                  <Star size={14} />
-                  {nota.toLocaleString('pt-BR')}
-                </span>
-              )}
-            </li>
-          )
-        })}
-      </ol>
+      <DndContext
+        sensors={sensores}
+        collisionDetection={closestCenter}
+        onDragEnd={terminouArrastar}
+      >
+        <SortableContext
+          items={ordenados.map((d) => d.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ol className="flex flex-col gap-2">
+            {ordenados.map((prato, indice) => (
+              <LinhaPrato
+                key={prato.id}
+                prato={prato}
+                indice={indice}
+                uid={uid}
+              />
+            ))}
+          </ol>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
