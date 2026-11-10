@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
-import { Leaf, LogOut, Pause, Play, X } from 'lucide-react'
+import { Leaf, LogOut, Pause, Play } from 'lucide-react'
 import GlobeView from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
+import PlacePanel from './components/place/PlacePanel'
 import { useAuth } from './hooks/useAuth'
 import { usePlaces } from './hooks/usePlaces'
 import { auth } from './lib/firebase'
-import { CONTINENT_NAMES, placeDetail, type Place } from './lib/places'
+import type { Place } from './lib/places'
 
 function App() {
   // Todos os hooks ficam aqui em cima, antes de qualquer "return" condicional
@@ -76,24 +77,11 @@ function App() {
       )}
 
       {selected && (
-        <aside className="fixed right-6 top-6 w-80 rounded-3xl border border-white/60 bg-white/40 p-6 shadow-xl backdrop-blur-md">
-          <button
-            onClick={() => setSelected(null)}
-            className="absolute right-4 top-4 text-pink-500 hover:text-pink-700"
-            aria-label="Fechar"
-          >
-            <X size={20} />
-          </button>
-          <h2 className="text-3xl font-bold text-pink-600">{selected.name}</h2>
-          <p className="mt-1 text-pink-500">
-            {CONTINENT_NAMES[selected.continent]}
-          </p>
-          {selected.kind === 'territory' && (
-            <p className="mt-2 text-sm text-pink-400">
-              Território{placeDetail(selected) && ` · ${placeDetail(selected)}`}
-            </p>
-          )}
-        </aside>
+        <PlacePanel
+          place={selected}
+          status={statuses[selected.id] ?? 'pending'}
+          onClose={() => setSelected(null)}
+        />
       )}
     </>
   )
