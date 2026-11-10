@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import DishForm from './DishForm'
 import DishItem from './DishItem'
+import PlaceActions from './PlaceActions'
 import FlagIcon from '../ui/FlagIcon'
 import { useDishes } from '../../hooks/useDishes'
 import { CONTINENT_NAMES, placeDetail, type Place } from '../../lib/places'
@@ -96,6 +97,13 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
           <span>Registrar prato</span>
         </button>
       )}
+
+      <PlaceActions
+        placeId={place.id}
+        status={status}
+        temPratos={dishes.length > 0}
+        carregando={carregando}
+      />
     </aside>
   )
 }
