@@ -91,7 +91,7 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
         </button>
       )}
 
-      <SuggestionsSection place={place} />
+      <SuggestionsSection place={place} dishes={dishes} status={status} />
       <PlaceActions
         placeId={place.id}
         status={status}
