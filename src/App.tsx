@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
-import { Leaf, LogOut, Pause, Play } from 'lucide-react'
+import { Dices, Leaf, LogOut, Pause, Play } from 'lucide-react'
 import GlobeView, { type FocusRequest } from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
 import PlacePanel from './components/place/PlacePanel'
@@ -38,6 +38,17 @@ function App() {
     if (status === 'skipped') pulados++
   }
   const resolvidos = feitos + pulados
+
+    // Sorteio: só entra lugar pendente (sem documento no Firestore também é pendente)
+  const pendentes = PLACES.filter(
+    (lugar) => (statuses[lugar.id] ?? 'pending') === 'pending',
+  )
+
+  function sortear() {
+    if (pendentes.length === 0) return
+    const escolhido = pendentes[Math.floor(Math.random() * pendentes.length)]
+    escolherNaBusca(escolhido)
+  }
 
   // 1) Ainda descobrindo se tem alguém logado: tela simples de espera
   if (loading) {
@@ -86,6 +97,15 @@ function App() {
       >
         <LogOut size={18} />
         <span>Sair</span>
+      </button>
+
+            <button
+        onClick={sortear}
+        disabled={pendentes.length === 0}
+        className="fixed left-6 top-34 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60 disabled:opacity-50"
+      >
+        <Dices size={18} />
+        <span>Sortear lugar</span>
       </button>
 
             <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
