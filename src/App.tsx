@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import {
   BarChart3,
@@ -34,6 +34,8 @@ function App() {
   const [rankingAberto, setRankingAberto] = useState(false)
   const [passaporteAberto, setPassaporteAberto] = useState(false)
   const [estatisticasAberto, setEstatisticasAberto] = useState(false)
+  const [globoPronto, setGloboPronto] = useState(false)
+  const globoCarregou = useCallback(() => setGloboPronto(true), [])
 
   async function sair() {
     setSelected(null)
@@ -42,6 +44,7 @@ function App() {
     setRankingAberto(false)
     setPassaporteAberto(false)
     setEstatisticasAberto(false)
+    setGloboPronto(false)
     await signOut(auth)
   }
 
@@ -110,6 +113,7 @@ function App() {
         spinRequest={spin}
         onSpinEnd={terminouSorteio}
         onSelect={setSelected}
+        onLoaded={globoCarregou}
       />
 
       <SearchBar onSelect={escolherNaBusca} />
@@ -223,6 +227,20 @@ function App() {
           onClose={() => setSelected(null)}
         />
       )}
+
+      <div
+        aria-hidden={globoPronto}
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 transition-opacity duration-700 ${
+          globoPronto ? 'pointer-events-none opacity-0' : 'opacity-100'
+        }`}
+        style={{
+          background:
+            'linear-gradient(180deg, #cdb8ee 0%, #f3b8d4 55%, #ffd9c7 100%)',
+        }}
+      >
+        <Leaf className="h-12 w-12 animate-pulse text-[#d9578a]" />
+        <p className="font-semibold text-[#b0476f]">Carregando o globo...</p>
+      </div>
     </>
   )
 }

@@ -39,6 +39,7 @@ type Props = {
   spinRequest: FocusRequest | null // pedido de roleta (sorteio)
   onSelect: (place: Place) => void
   onSpinEnd: (place: Place) => void // avisa quando a roleta parou
+  onLoaded?: () => void // avisa quando o globo e o mapa estão prontos
 }
 
 function useWindowSize() {
@@ -63,6 +64,7 @@ export default function GlobeView({
   spinRequest,
   onSelect,
   onSpinEnd,
+  onLoaded,
 }: Props) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined)
   const { width, height } = useWindowSize()
@@ -112,6 +114,20 @@ export default function GlobeView({
   }, [oceanTexture])
 
   const handleReady = useCallback(() => setReady(true), [])
+
+  // Avisa o App quando o globo e o mapa já estão prontos
+  useEffect(() => {
+    if (!ready || features.length === 0) return undefined
+    // espera 2 quadros para os países terem sido desenhados na tela
+    let id2 = 0
+    const id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => onLoaded?.())
+    })
+    return () => {
+      cancelAnimationFrame(id1)
+      cancelAnimationFrame(id2)
+    }
+  }, [ready, features, onLoaded])
 
   // Um anel no lugar selecionado; lista vazia = nenhum anel
   const ringsData = useMemo(() => {
