@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
-import { Dices, Leaf, LogOut, Pause, Play, Trophy } from 'lucide-react'
+import { BookOpen, Dices, Leaf, LogOut, Pause, Play, Trophy } from 'lucide-react'
 import GlobeView, { type FocusRequest } from './components/globe/GlobeView'
 import LoginScreen from './components/auth/LoginScreen'
 import PlacePanel from './components/place/PlacePanel'
 import RankingPanel from './components/ranking/RankingPanel'
 import SearchBar from './components/search/SearchBar'
+import PassportPanel from './components/passport/PassportPanel'
 import { useAuth } from './hooks/useAuth'
 import { usePlaces } from './hooks/usePlaces'
 import { auth } from './lib/firebase'
 import { PLACES, type Place } from './lib/places'
+
 
 function App() {
   // Todos os hooks ficam aqui em cima, antes de qualquer "return" condicional
@@ -21,12 +23,14 @@ function App() {
   const [spin, setSpin] = useState<FocusRequest | null>(null)
   const [sorteando, setSorteando] = useState(false)
     const [rankingAberto, setRankingAberto] = useState(false)
+      const [passaporteAberto, setPassaporteAberto] = useState(false)
 
   async function sair() {
     setSelected(null)
     setFocus(null)
     setSorteando(false)
     setRankingAberto(false)
+    setPassaporteAberto(false)
     await signOut(auth)
   }
 
@@ -125,11 +129,25 @@ function App() {
       </button>
 
             <button
-        onClick={() => setRankingAberto(true)}
+                onClick={() => {
+          setPassaporteAberto(false)
+          setRankingAberto(true)
+        }}
         className="fixed left-6 top-48 flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60"
       >
         <Trophy size={18} />
         <span>Ranking</span>
+      </button>
+
+            <button
+        onClick={() => {
+          setRankingAberto(false)
+          setPassaporteAberto(true)
+        }}
+        className="fixed left-6 top-[15.5rem] flex items-center gap-2 rounded-full border border-white/60 bg-white/40 px-4 py-2 font-semibold text-pink-600 shadow-lg backdrop-blur-md hover:bg-white/60"
+      >
+        <BookOpen size={18} />
+        <span>Passaporte</span>
       </button>
 
             <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
@@ -153,6 +171,13 @@ function App() {
 
             {rankingAberto && (
         <RankingPanel uid={user.uid} onClose={() => setRankingAberto(false)} />
+      )}
+
+            {passaporteAberto && (
+        <PassportPanel
+          statuses={statuses}
+          onClose={() => setPassaporteAberto(false)}
+        />
       )}
 
       {selected && (
