@@ -1,5 +1,8 @@
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
+import DishForm from './DishForm'
 import FlagIcon from '../ui/FlagIcon'
+import { useDishes } from '../../hooks/useDishes'
 import { CONTINENT_NAMES, placeDetail, type Place } from '../../lib/places'
 import type { CountryStatus } from '../../types/country'
 
@@ -20,9 +23,11 @@ type Props = {
 export default function PlacePanel({ place, status, onClose }: Props) {
   const info = STATUS_INFO[status]
   const detalhe = placeDetail(place)
+  const { dishes, carregando, erro } = useDishes(place.id)
+  const [formAberto, setFormAberto] = useState(false)
 
   return (
-    <aside className="fixed right-6 top-6 w-80 rounded-3xl border border-white/60 bg-white/40 p-6 shadow-xl backdrop-blur-md">
+    <aside className="fixed right-6 top-6 max-h-[calc(100vh-3rem)] w-80 overflow-y-auto rounded-3xl border border-white/60 bg-white/40 p-6 shadow-xl backdrop-blur-md">
       <button
         onClick={onClose}
         className="absolute right-4 top-4 text-pink-500 hover:text-pink-700"
@@ -53,6 +58,57 @@ export default function PlacePanel({ place, status, onClose }: Props) {
         />
         <span>{info.rotulo}</span>
       </div>
+
+      <h3 className="mt-5 text-lg font-bold text-pink-600">Pratos</h3>
+
+      {erro && (
+        <p role="alert" className="mt-2 text-sm text-[#c2255c]">
+          Não foi possível carregar os pratos.
+        </p>
+      )}
+
+      {!erro && !carregando && dishes.length === 0 && (
+        <p className="mt-2 text-sm text-pink-400">
+          Nenhum prato registrado ainda.
+        </p>
+      )}
+
+      <ul className="mt-2 space-y-2">
+        {dishes.map((prato) => (
+          <li
+            key={prato.id}
+            className="flex items-center justify-between gap-2 rounded-2xl bg-white/50 px-3 py-2 text-[#5c3347]"
+          >
+            <span className="font-semibold">{prato.name}</span>
+            <span className="flex shrink-0 gap-1 text-xs font-semibold">
+              <span className="rounded-full bg-[#f48fb1]/30 px-2 py-0.5 text-[#b0476f]">
+                {prato.type === 'doce' ? 'Doce' : 'Salgado'}
+              </span>
+              {prato.isExtra && (
+                <span className="rounded-full bg-[#fff0b8] px-2 py-0.5 text-[#8a6d1d]">
+                  Extra
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {formAberto ? (
+        <DishForm
+          placeId={place.id}
+          statusAtual={status}
+          onDone={() => setFormAberto(false)}
+        />
+      ) : (
+        <button
+          onClick={() => setFormAberto(true)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/50 py-2 font-semibold text-[#b0476f] hover:bg-white/70"
+        >
+          <Plus size={18} />
+          <span>Registrar prato</span>
+        </button>
+      )}
     </aside>
   )
 }
