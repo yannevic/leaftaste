@@ -115,7 +115,7 @@ export default function DishItem({ dish, uid }: Props) {
                 </span>
               </div>
               {minha.comment && (
-                <p className="mt-1 whitespace-pre-wrap break-words">
+                <p className="mt-1 whitespace-pre-wrap wrap-break-word">
                   {minha.comment}
                 </p>
               )}
@@ -150,7 +150,7 @@ export default function DishItem({ dish, uid }: Props) {
                 </span>
               </div>
               {outra.comment && (
-                <p className="mt-1 whitespace-pre-wrap break-words">
+                <p className="mt-1 whitespace-pre-wrap wrap-break-word">
                   {outra.comment}
                 </p>
               )}

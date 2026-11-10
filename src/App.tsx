@@ -8,7 +8,7 @@ import SearchBar from './components/search/SearchBar'
 import { useAuth } from './hooks/useAuth'
 import { usePlaces } from './hooks/usePlaces'
 import { auth } from './lib/firebase'
-import type { Place } from './lib/places'
+import { PLACES, type Place } from './lib/places'
 
 function App() {
   // Todos os hooks ficam aqui em cima, antes de qualquer "return" condicional
@@ -29,6 +29,15 @@ function App() {
     setSelected(place)
     setFocus((anterior) => ({ id: place.id, n: (anterior?.n ?? 0) + 1 }))
   }
+  // Contador: lugar finalizado ou pulado conta como "resolvido"
+  let feitos = 0
+  let pulados = 0
+  for (const lugar of PLACES) {
+    const status = statuses[lugar.id]
+    if (status === 'done') feitos++
+    if (status === 'skipped') pulados++
+  }
+  const resolvidos = feitos + pulados
 
   // 1) Ainda descobrindo se tem alguém logado: tela simples de espera
   if (loading) {
@@ -78,6 +87,16 @@ function App() {
         <LogOut size={18} />
         <span>Sair</span>
       </button>
+
+            <div className="fixed bottom-6 left-6 rounded-3xl border border-white/60 bg-white/40 px-5 py-3 text-[#5c3347] shadow-xl backdrop-blur-md">
+        <p className="text-2xl font-bold text-pink-600">
+          {resolvidos}/{PLACES.length}
+        </p>
+        <p className="text-sm">lugares resolvidos</p>
+        {pulados > 0 && (
+          <p className="text-xs text-[#b0476f]">{pulados} pulados</p>
+        )}
+      </div>
 
       {erro && (
         <p
