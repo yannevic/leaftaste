@@ -143,3 +143,10 @@ export async function escolherSugestao(
 
   await batch.commit()
 }
+
+// Grava a receita de UM prato (campo "recipe"). Mexe só nesse campo:
+// nome, tipo, notas e o resto do prato ficam como estavam.
+// Se o prato já tinha receita, ela é substituída.
+export async function salvarReceita(dishId: string, receita: string) {
+  await updateDoc(doc(db, 'dishes', dishId), { recipe: receita })
+}

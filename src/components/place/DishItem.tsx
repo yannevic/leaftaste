@@ -92,7 +92,14 @@ export default function DishItem({ dish, uid, lugar }: Props) {
         <MessageCircle size={16} />
         <span>{chatAberto ? 'Fechar chat' : 'Conversar sobre a receita'}</span>
       </button>
-      {chatAberto && <RecipeChat prato={dish.name} lugar={lugar} />}
+      {chatAberto && (
+        <RecipeChat
+          dishId={dish.id}
+          prato={dish.name}
+          lugar={lugar}
+          temReceita={dish.recipe.trim() !== ''}
+        />
+      )}
 
       <div className="mt-2 space-y-2 text-sm">
         {/* A minha avaliação */}
