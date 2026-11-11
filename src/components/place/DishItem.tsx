@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import RecipeChat from './RecipeChat'
 import StarRating from '../ui/StarRating'
-import { rateDish } from '../../lib/dishes'
+import { rateDish, salvarReceita } from '../../lib/dishes'
 import type { Dish } from '../../types/dish'
 
 // 3,5 vira "3,5" e 4 vira "4"
@@ -28,6 +28,12 @@ export default function DishItem({ dish, uid, lugar }: Props) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [chatAberto, setChatAberto] = useState(false)
+
+  // Edição da receita à mão (sem IA)
+  const [editandoReceita, setEditandoReceita] = useState(false)
+  const [textoReceita, setTextoReceita] = useState('')
+  const [salvandoReceita, setSalvandoReceita] = useState(false)
+  const [erroReceita, setErroReceita] = useState('')
 
   function abrirEdicao() {
     // começa com o que já estava salvo (ou vazio, se ainda não avaliou)
@@ -55,6 +61,32 @@ export default function DishItem({ dish, uid, lugar }: Props) {
     }
   }
 
+  function abrirEdicaoReceita() {
+    // começa com a receita que já estava salva (ou vazio, se não tinha)
+    setTextoReceita(dish.recipe)
+    setErroReceita('')
+    setEditandoReceita(true)
+  }
+
+  async function salvarEdicaoReceita() {
+    const texto = textoReceita.trim()
+    if (texto === '') {
+      setErroReceita('A receita está vazia. Escreva algo ou cancele.')
+      return
+    }
+    setErroReceita('')
+    setSalvandoReceita(true)
+    try {
+      await salvarReceita(dish.id, texto)
+      setEditandoReceita(false)
+    } catch (err) {
+      console.error('Erro ao salvar receita:', err)
+      setErroReceita('Não foi possível salvar a receita. Tente de novo.')
+    } finally {
+      setSalvandoReceita(false)
+    }
+  }
+
   return (
     <li className="rounded-2xl bg-white/50 px-3 py-2 text-[#5c3347]">
       <div className="flex items-center justify-between gap-2">
@@ -71,15 +103,61 @@ export default function DishItem({ dish, uid, lugar }: Props) {
         </span>
       </div>
 
-      {dish.recipe && (
-        <details className="mt-2 text-sm">
-          <summary className="cursor-pointer font-semibold text-[#b0476f]">
-            <span>Ver receita</span>
-          </summary>
-          <p className="mt-1 whitespace-pre-wrap wrap-break-word">
-            {dish.recipe}
-          </p>
-        </details>
+      {/* Receita: ou a caixa de edição, ou o "Ver receita" + botão de editar */}
+      {editandoReceita ? (
+        <div className="mt-2 space-y-2 text-sm">
+          <textarea
+            value={textoReceita}
+            onChange={(e) => setTextoReceita(e.target.value)}
+            rows={8}
+            disabled={salvandoReceita}
+            placeholder="Escreva a receita"
+            className="w-full rounded-2xl border border-white/70 bg-white/60 px-3 py-2 text-[#5c3347] placeholder:text-[#b0476f]/50 outline-none focus:border-[#f48fb1] focus:ring-2 focus:ring-[#f48fb1]/40 disabled:opacity-60"
+          />
+          {erroReceita && (
+            <p role="alert" className="text-[#c2255c]">
+              {erroReceita}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={salvarEdicaoReceita}
+              disabled={salvandoReceita}
+              className="flex-1 rounded-2xl bg-[#f48fb1] py-1.5 font-semibold text-white shadow-md transition hover:bg-[#ee7ba3] disabled:opacity-60"
+            >
+              <span>{salvandoReceita ? 'Salvando...' : 'Salvar receita'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditandoReceita(false)}
+              disabled={salvandoReceita}
+              className="rounded-2xl border border-white/70 bg-white/50 px-3 py-1.5 font-semibold text-[#b0476f] hover:bg-white/70 disabled:opacity-60"
+            >
+              <span>Cancelar</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {dish.recipe && (
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer font-semibold text-[#b0476f]">
+                <span>Ver receita</span>
+              </summary>
+              <p className="mt-1 whitespace-pre-wrap wrap-break-word">
+                {dish.recipe}
+              </p>
+            </details>
+          )}
+          <button
+            type="button"
+            onClick={abrirEdicaoReceita}
+            className="mt-2 block text-sm font-semibold text-[#b0476f] underline"
+          >
+            <span>{dish.recipe ? 'Editar receita' : 'Escrever receita'}</span>
+          </button>
+        </>
       )}
 
       {/* Chat de receita: abre e fecha. Fechar apaga a conversa. */}
