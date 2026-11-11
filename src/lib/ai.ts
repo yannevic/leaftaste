@@ -150,3 +150,48 @@ export async function sugerirNovos(
   if (novas.length === 0) throw new Error('Nenhuma sugestao nova')
   return novas
 }
+
+// Uma mensagem da conversa: role diz quem falou ('user' = o casal, 'model' = a IA)
+type MensagemChat = {
+  role: 'user' | 'model'
+  parts: { type: 'text'; text: string }[]
+}
+
+// Cria uma conversa sobre a receita de UM prato.
+// Devolve uma função enviar(texto): manda a mensagem e devolve a resposta da IA.
+// A lista "historico" mora aqui fora, então a função enviar lembra de tudo
+// o que já foi dito (é o que faz a IA entender "faz para 2 pessoas").
+// A conversa NÃO é salva em lugar nenhum: some quando a tela fecha.
+export function criarChatReceita(prato: string, lugar: string) {
+  const historico: MensagemChat[] = []
+
+  // As instruções para a IA vão junto da PRIMEIRA mensagem
+  const instrucoes = `Você é um cozinheiro simpático ajudando um casal a fazer o prato "${prato}", típico de ${lugar}. Ajude a decidir e ajustar a receita: troca de ingredientes, quantidades, passo a passo, tempo e dicas. Prefira ingredientes fáceis de comprar no Brasil e receitas que dê para fazer em casa. Responda em português do Brasil, em texto simples, SEM markdown (sem asteriscos, sem # e sem tabelas); para listas, use linhas começando com um hífen. Seja direto. Quando pedirem a receita completa, escreva os ingredientes (com quantidades) e depois o modo de preparo em passos numerados.  Chame sempre o casal de "zorguinhos", de forma carinhosa.`
+
+  return async function enviar(texto: string): Promise<string> {
+    const ehPrimeira = historico.length === 0
+    const textoEnviado = ehPrimeira
+      ? `${instrucoes}\n\nMensagem do casal: ${texto}`
+      : texto
+
+    for (const nome of MODELOS) {
+      try {
+        const modelo = getGenerativeModel(ai, { model: nome })
+        // recria a conversa já com tudo o que foi dito até agora
+        const chat = modelo.startChat({ history: historico })
+        const resultado = await chat.sendMessage(textoEnviado)
+        const resposta = resultado.response.text()
+
+        // só depois do sucesso guardamos a pergunta e a resposta
+        historico.push(
+          { role: 'user', parts: [{ type: 'text', text: textoEnviado }] },
+          { role: 'model', parts: [{ type: 'text', text: resposta }] },
+        )
+        return resposta
+      } catch (err) {
+        console.warn(`Modelo ${nome} falhou no chat:`, err)
+      }
+    }
+    throw new Error('IA indisponivel')
+  }
+}
