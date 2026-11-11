@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { MessageCircle } from 'lucide-react'
+import RecipeChat from './RecipeChat'
 import StarRating from '../ui/StarRating'
 import { rateDish } from '../../lib/dishes'
 import type { Dish } from '../../types/dish'
@@ -11,9 +13,10 @@ function formatarNota(nota: number): string {
 type Props = {
   dish: Dish
   uid: string // quem está logado
+  lugar: string // nome do lugar do prato (usado pelo chat de receita)
 }
 
-export default function DishItem({ dish, uid }: Props) {
+export default function DishItem({ dish, uid, lugar }: Props) {
   const ratings = dish.ratings ?? {}
   const minha = ratings[uid]
   // a avaliação da outra pessoa (só existem duas contas)
@@ -24,6 +27,7 @@ export default function DishItem({ dish, uid }: Props) {
   const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
+  const [chatAberto, setChatAberto] = useState(false)
 
   function abrirEdicao() {
     // começa com o que já estava salvo (ou vazio, se ainda não avaliou)
@@ -77,6 +81,18 @@ export default function DishItem({ dish, uid }: Props) {
           </p>
         </details>
       )}
+
+      {/* Chat de receita: abre e fecha. Fechar apaga a conversa. */}
+      <button
+        type="button"
+        onClick={() => setChatAberto(!chatAberto)}
+        aria-expanded={chatAberto}
+        className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#b0476f] hover:text-pink-600"
+      >
+        <MessageCircle size={16} />
+        <span>{chatAberto ? 'Fechar chat' : 'Conversar sobre a receita'}</span>
+      </button>
+      {chatAberto && <RecipeChat prato={dish.name} lugar={lugar} />}
 
       <div className="mt-2 space-y-2 text-sm">
         {/* A minha avaliação */}

@@ -71,7 +71,7 @@ export default function PlacePanel({ place, status, uid, onClose }: Props) {
       )}
       <ul className="mt-2 space-y-2">
         {dishes.map((prato) => (
-          <DishItem key={prato.id} dish={prato} uid={uid} />
+          <DishItem key={prato.id} dish={prato} uid={uid} lugar={place.name} />
         ))}
       </ul>
       {formAberto ? (
